@@ -20,13 +20,68 @@ docker build -t $IMAGE_TAG .
 kind load docker-image --nodes kind-worker $IMAGE_TAG
 #+END_SRC
 
+
+* Docker run cloud-native k8s dev env
+** Environment for docker-init
+
+Customize with your own email and repos (usually forks) to check out.
+
+   #+name: kubemacs-dev.env
+   #+begin_src shell :tangle test-writing.env
+     # Pin your image
+     # KUBEMACS_IMAGE=kubemacs/kubemacs:2020.02.19
+     # Or not
+     KUBEMACS_IMAGE=kubemacs/kubemacs:latest
+     # $(id -u) / mainly for ~/.kube/config permissions
+     HOST_UID="1000"
+     # Vars for git commits
+     KUBEMACS_GIT_EMAIL=hh@ii.coop
+     KUBEMACS_GIT_NAME="Hippie Hacker"
+     KUBEMACS_TIMEZONE=Pacific/Auckland
+     # This is the kind cluster name, maybe we should rename
+     # for some reason we can't used kind as the name
+     KUBEMACS_KIND_NAME=kubemacs
+     # ~/.kube/$KUBEMACS_HOSTCONFIG_NAME
+     KUBEMACS_HOST_KUBECONFIG_NAME=config
+     # Using a docker registry alongside kind
+     KIND_LOCAL_REGISTRY_ENABLE=true
+     KIND_LOCAL_REGISTRY_NAME=local-registry
+     KIND_LOCAL_REGISTRY_PORT=5000
+     # Defaults to home
+     KUBEMACS_INIT_DEFAULT_REPOS_FOLDER=/home/ii
+     # The repositories to check out
+     KUBEMACS_INIT_DEFAULT_REPOS='https://github.com/kubemacs/kubemacs.git'
+     # The folder to start tmate/emacs in
+     KUBEMACS_INIT_DEFAULT_DIR=kubemacs
+     # The first file you want emacs to open
+     KUBEMACS_INIT_ORG_FILE=kubemacs/kubemacs.org
+     # If you want to see lots of information
+     KUBEMACS_INIT_DEBUG=true
+   #+end_src
+
+** Running Docker
+   #+name: kubemacs-dev.sh
+   #+begin_src shell :tangle kubemacs-dev.sh
+     ENV_FILE=test-writing.env
+     . $ENV_FILE
+     docker run \
+            --env-file $ENV_FILE \
+            --name kubemacs-docker-init \
+            --user root \
+            --privileged \
+            --network host \
+            --rm \
+            -it \
+            -v "$HOME/.kube:/tmp/.kube" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            $KUBEMACS_IMAGE \
+            docker-init.sh
+   #+end_src
+
 * Initializing only with Docker
 #+begin_src shell
-  docker run -it --rm --name kubemacs-init \
-     -v "$HOME/.kube":/tmp/.kube \
-     -v /var/run/docker.sock:/var/run/docker.sock \
-     -e KUBEMACS_GIT_EMAIL="myemail@example.org" \
-     -e KUBEMACS_GIT_NAME="My name" \
+  ENV_FILE=test-writing.env
+  . $ENV_FILE
      -e KUBEMACS_INIT_DEFAULT_REPOS="https://github.com/cncf/apisnoop https://github.com/kubernetes/kubernetes" \
      -e KUBEMACS_INIT_ORG_FILE="\$HOME/Projects/apisnoop/deployment/k8s/xip.io/README.org" \
      -e KUBEMACS_DEFAULT_KIND_NAME=kind-self-init-test \

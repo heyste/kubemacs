@@ -1,42 +1,3 @@
-# -*- ii: true -*-
-#+TITLE: Network Booting
-
-
-* Summary
-
-Setup a cluster with supporting services to network boot a Rapberry Pi.
-Due to the initial boot process we need to have the PXE container connected to the host network on boot.
-The TFTP container will be located within the cluster.
-
-* Dependencies
-  
-We need to have some key network ports, UDP 67 & 69 free before we bring up the network booting environment.
- 
-** Check if UDP Port 67 is free
-*** ss
-   #+begin_src shell :dir /sudo::
-     sudo ss -ulnp | grep 67
-   #+end_src
-
-   #+RESULTS:
-   #+begin_example
-   UNCONN   0        0              0.0.0.0%virbr0:67               0.0.0.0:*       users:(("dnsmasq",pid=3799,fd=3))                                              
-   #+end_example
-
-*** lsof
-   #+begin_src shell :dir /sudo::
-      sudo lsof -iUDP -n -P | grep 67 
-   #+end_src
-
-   #+RESULTS:
-   #+begin_example
-   dnsmasq   3799 libvirt-dnsmasq    3u  IPv4  58061      0t0  UDP *:67 
-   #+end_example
-
-** If required diable this connection
-
-   Use the PID from the output above to release UDP port 67
-
 * Bootstrapping from Docker
 ** Environment for docker-init
 
@@ -119,6 +80,7 @@ Customize with your own email and repos (usually forks) to check out.
    #+end_src
 
    #+RESULTS:
+
    #+begin_example
    c8fcea367726        heyste/pxeboot:latest      "webproc --port 8067…"   About a minute ago   Up About a minute                 pxeboot
    #+end_example
@@ -139,6 +101,7 @@ Customize with your own email and repos (usually forks) to check out.
  https://github.com/pimterry/rpi-pxe-server
 ** TODO alternate astralboot
  https://github.com/ipfs/astralboot
+
 * Launching from Kubemacs
 ** Bring up tilt
 
